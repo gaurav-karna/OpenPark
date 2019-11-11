@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">OpenPark</string>
+    <string name="goto_map">Map</string>
+    <string name="goto_home">Home</string>
+    <string name="scan">Scan</string>
+    <string name="production">A Gaurav Karna Production</string>
 </resources>
