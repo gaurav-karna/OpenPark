@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1043157962734-jrbfajm6g1bmnumnvuabkmm3hvt6dmeh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.openpark",
+            "certificate_hash": "d96e30c2e758a56c28bce04ff9c0f0c005476a0a"
+          }
+        },
+        {
           "client_id": "1043157962734-g7q0ug6cd0fvvko7rqna27bku1jvvr55.apps.googleusercontent.com",
           "client_type": 3
         }

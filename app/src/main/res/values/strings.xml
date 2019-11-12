@@ -4,4 +4,5 @@
     <string name="goto_home">Home</string>
     <string name="scan">Scan</string>
     <string name="production">A Gaurav Karna Production</string>
+    <string name="title_activity_park_map">Map</string>
 </resources>
