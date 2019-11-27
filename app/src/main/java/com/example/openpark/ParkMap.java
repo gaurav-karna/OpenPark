@@ -20,6 +20,7 @@ import java.util.ArrayList;
 public class ParkMap extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private float zoomLevel = 17f;      // global default zoom level
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +54,19 @@ public class ParkMap extends FragmentActivity implements OnMapReadyCallback {
             mMap.addMarker(new MarkerOptions().position(loc_to_add));
         }
 
+//        System.out.println("Here is the list of coordinates pulled from Firestore");
+//        for (Location x: coords) {
+//            System.out.println("Latitude: " + x.getLatitude() + " Longitude: " + x.getLongitude());
+//        }
+//        for (Location x: self_location) {
+//            System.out.println("Self Location: " + x.getLatitude() + " " + x.getLongitude());
+//        }
+//        System.out.println("Done");
+
         // moving map to self_location (which will always be the first and only Location in SELF_LOC)
         Location self_loc = (Location) intent.getParcelableArrayListExtra(MainActivity.SELF_LOC).get(0);
         LatLng self_latlng = new LatLng(self_loc.getLatitude(), self_loc.getLongitude());
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(self_latlng));
+        mMap.addMarker(new MarkerOptions().position(self_latlng).title("Your Location"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(self_latlng, zoomLevel));
     }
 }

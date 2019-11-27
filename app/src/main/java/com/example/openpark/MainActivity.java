@@ -4,10 +4,14 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Parcelable;
+import android.os.SystemClock;
 import android.view.View;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -22,6 +26,8 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -55,12 +61,6 @@ public class MainActivity extends AppCompatActivity {
         When implementing the Users model in the future, it would be useful to have a private
         variable dedicated to storing the user's city. Currently, it is hard set to 'montreal'
          */
-    }
-
-    // Starts the ParkMap activity, opens the Map API, populating it with info from DB
-    public void triggerMap (View view) {
-        final Intent trigger = new Intent(this, ParkMap.class);
-
         // init the Location client, and get fine location of user
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -75,17 +75,15 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(Location location) {
                         // Got last known location. In some rare situations this can be null.
                         if (location != null) {
+                            // initing coords
+                            queryDB();
+
                             // setting up self_location
                             self_location.clear();
                             self_location.add(location);
-                            // initing coords
-                            queryDB();
-                            // adding locations of parkings to Intent
-                            trigger.putParcelableArrayListExtra(GEOPOINTS, coords);
-                            trigger.putParcelableArrayListExtra(SELF_LOC, self_location);
                         } else { // let user know to try again in a few minutes
                             AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this)
-                            .create();
+                                    .create();
                             alertDialog.setTitle("Could not get location");
                             alertDialog.setMessage("We had trouble fetching your location. Try again in a few minutes!");
                             alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
@@ -99,6 +97,45 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    // Starts the ParkMap activity, opens the Map API, populating it with info from DB
+    public void triggerMap (View view) {
+        Intent trigger = new Intent(this, ParkMap.class);
+
+//         Debug block - START
+//        System.out.println("Here is the list of coordinates pulled from Firestore");
+//        for (Location x: coords) {
+//            System.out.println("Latitude: " + x.getLatitude() + " Longitude: " + x.getLongitude());
+//        }
+//        for (Location x: self_location) {
+//            System.out.println("Self Location: " + x.getLatitude() + " " + x.getLongitude());
+//        }
+//        System.out.println("Done");
+//         Debug block - END
+
+
+        // have a loading screen on main thread for 3 seconds, while GLOBAL coords and self_location populate
+        final ProgressDialog progress = new ProgressDialog(MainActivity.this);
+        progress.setTitle("Loading...");
+        progress.setMessage("Please wait while we fetch data from our servers...");
+        progress.show();
+
+        Runnable progressRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                progress.cancel();
+            }
+
+        };
+
+        Handler pdCanceller = new Handler();
+        pdCanceller.postDelayed(progressRunnable, 3000);
+
+        // adding locations of parkings to Intent
+        trigger.putParcelableArrayListExtra(GEOPOINTS, coords);
+        trigger.putParcelableArrayListExtra(SELF_LOC, self_location);
 
         startActivity(trigger);
     }
@@ -117,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
+
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 GeoPoint gp = document.getGeoPoint("location");
                                 Location toAdd = new Location("");
@@ -124,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
                                 toAdd.setLongitude(gp.getLongitude());
                                 coords.add(toAdd);
                             }
+
                         } else {
                             AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
                             alertDialog.setTitle("Could not get information");
