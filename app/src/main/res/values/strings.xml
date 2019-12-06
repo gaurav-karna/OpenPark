@@ -5,4 +5,5 @@
     <string name="scan">Scan</string>
     <string name="production">A Gaurav Karna Production</string>
     <string name="title_activity_park_map">Map</string>
+    <string name="analysis_message">Your cropped image has been scaled accordingly.</string>
 </resources>

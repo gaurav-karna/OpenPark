@@ -3,15 +3,20 @@ package com.example.openpark;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
-import android.os.Parcelable;
-import android.os.SystemClock;
+//import android.os.Parcelable;
+//import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.view.View;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -23,11 +28,16 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.android.gms.maps.model.LatLng;
+//import com.google.android.gms.maps.model.LatLng;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+//import java.util.Calendar;
 import java.util.Date;
+
+import static android.os.Environment.getExternalStoragePublicDirectory;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -52,6 +62,11 @@ public class MainActivity extends AppCompatActivity {
 
     // initing self location
     public ArrayList<Location> self_location = new ArrayList<>(); // in reality, will only be 1 unit long
+
+    // some variables we will need for the take picture and crop mechanism
+    static final int REQUEST_TAKE_PHOTO = 1;
+    static final int CROP_CODE = 2;
+    private Uri picUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                     });
                             alertDialog.show();
-                            return;
                         }
                     }
                 });
@@ -102,17 +116,6 @@ public class MainActivity extends AppCompatActivity {
     // Starts the ParkMap activity, opens the Map API, populating it with info from DB
     public void triggerMap (View view) {
         Intent trigger = new Intent(this, ParkMap.class);
-
-//         Debug block - START
-//        System.out.println("Here is the list of coordinates pulled from Firestore");
-//        for (Location x: coords) {
-//            System.out.println("Latitude: " + x.getLatitude() + " Longitude: " + x.getLongitude());
-//        }
-//        for (Location x: self_location) {
-//            System.out.println("Self Location: " + x.getLatitude() + " " + x.getLongitude());
-//        }
-//        System.out.println("Done");
-//         Debug block - END
 
 
         // have a loading screen on main thread for 3 seconds, while GLOBAL coords and self_location populate
@@ -138,6 +141,69 @@ public class MainActivity extends AppCompatActivity {
         trigger.putParcelableArrayListExtra(SELF_LOC, self_location);
 
         startActivity(trigger);
+    }
+
+    // Starts the scanning mechanism - Camera intent & Cropping
+
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    String currentPhotoPath;
+
+    // helper method to create collision-resistant timestamps
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+    // STARTS camera app and saves photo
+    public void dispatchTakePictureIntent(View view) {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                return;
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
+    }
+
+    // function to handle image data once intent is fulfilled -- cropping mechanism
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUEST_IMAGE_CAPTURE) {
+                // get uri of image
+                picUri = data.getData();
+                cropPicture();
+            } else if (requestCode == CROP_CODE) {
+                // delegate to analyze the cropped image
+                Intent analysis = new Intent(this, AnalysisWait.class);
+                analysis.putExtras(data.getExtras());
+                startActivity(analysis);
+            }
+        }
     }
 
     /*
@@ -178,5 +244,40 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    // private method to perform the cropping of an image captured by the camera
+    private void cropPicture() {
+        try {
+            Intent cropIntent = new Intent("com.android.camera.action.CROP");
+            //indicate image type and Uri
+            cropIntent.setDataAndType(picUri, "image/*");
+            //set crop properties
+            cropIntent.putExtra("crop", "true");
+            //indicate aspect of desired crop
+//            cropIntent.putExtra("aspectX", 1);
+//            cropIntent.putExtra("aspectY", 1);
+//            //indicate output X and Y
+//            cropIntent.putExtra("outputX", 256);
+//            cropIntent.putExtra("outputY", 256);
+            //retrieve data on return
+            cropIntent.putExtra("return-data", true);
+            //start the activity - we handle returning in onActivityResult
+            startActivityForResult(cropIntent, CROP_CODE);
+        }
+        catch(ActivityNotFoundException anfe){
+            //display an error message
+            AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+            alertDialog.setTitle("Unable to crop");
+            alertDialog.setMessage(
+                    "Your device is unable to crop this image.");
+            alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            alertDialog.show();
+        }
     }
 }
