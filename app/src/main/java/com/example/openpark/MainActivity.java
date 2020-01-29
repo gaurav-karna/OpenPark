@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
-
+    static Uri cameraPicURI;
     // STARTS camera app and saves photo
     public void dispatchTakePictureIntent(View view) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -183,8 +183,10 @@ public class MainActivity extends AppCompatActivity {
                 Uri photoURI = FileProvider.getUriForFile(this,
                         "com.example.android.fileprovider",
                         photoFile);
+                picUri = photoURI;
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+                System.out.println("Taking photo");
             }
         }
     }
@@ -192,12 +194,13 @@ public class MainActivity extends AppCompatActivity {
     // function to handle image data once intent is fulfilled -- cropping mechanism
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        System.out.println("Picture taken");
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUEST_IMAGE_CAPTURE) {
-                // get uri of image
-                picUri = data.getData();
+                // Uri of pic saved in global var 'picUri'
                 cropPicture();
             } else if (requestCode == CROP_CODE) {
+                System.out.println("Post Crop");
                 // delegate to analyze the cropped image
                 Intent analysis = new Intent(this, AnalysisWait.class);
                 analysis.putExtras(data.getExtras());
@@ -262,6 +265,9 @@ public class MainActivity extends AppCompatActivity {
 //            cropIntent.putExtra("outputY", 256);
             //retrieve data on return
             cropIntent.putExtra("return-data", true);
+            // adding permission so camera can write cropped image to provided Uri
+            cropIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            cropIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             //start the activity - we handle returning in onActivityResult
             startActivityForResult(cropIntent, CROP_CODE);
         }
