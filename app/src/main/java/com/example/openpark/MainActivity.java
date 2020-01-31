@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
-    static Uri cameraPicURI;
+
     // STARTS camera app and saves photo
     public void dispatchTakePictureIntent(View view) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -186,7 +186,6 @@ public class MainActivity extends AppCompatActivity {
                 picUri = photoURI;
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-                System.out.println("Taking photo");
             }
         }
     }
@@ -263,11 +262,14 @@ public class MainActivity extends AppCompatActivity {
 //            //indicate output X and Y
 //            cropIntent.putExtra("outputX", 256);
 //            cropIntent.putExtra("outputY", 256);
+
             //retrieve data on return
             cropIntent.putExtra("return-data", true);
+            cropIntent.putExtra(MediaStore.EXTRA_OUTPUT, picUri);
             // adding permission so camera can write cropped image to provided Uri
             cropIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             cropIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
             //start the activity - we handle returning in onActivityResult
             startActivityForResult(cropIntent, CROP_CODE);
         }
