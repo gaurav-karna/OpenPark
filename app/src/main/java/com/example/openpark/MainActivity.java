@@ -199,10 +199,10 @@ public class MainActivity extends AppCompatActivity {
                 // Uri of pic saved in global var 'picUri'
                 cropPicture();
             } else if (requestCode == CROP_CODE) {
-                System.out.println("Post Crop");
                 // delegate to analyze the cropped image
                 Intent analysis = new Intent(this, AnalysisWait.class);
-                analysis.putExtras(data.getExtras());
+//                analysis.putExtras(data.getExtras());
+                analysis.putExtra("scaled_image", picUri.toString()); // add image to intent
                 startActivity(analysis);
             }
         }
