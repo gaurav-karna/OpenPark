@@ -3,6 +3,8 @@
     <string name="goto_map">Map</string>
     <string name="goto_home">Home</string>
     <string name="scan">Scan</string>
+    <string name="take_pic_again">Try Again</string>
+    <string name="analyze">Analyze</string>
     <string name="production">A Gaurav Karna Production</string>
     <string name="title_activity_park_map">Map</string>
     <string name="analysis_message">Your cropped image has been scaled accordingly.</string>

@@ -7,6 +7,41 @@
     android:background="#EE4848"
     tools:context=".AnalysisWait">
 
+    <Button
+        android:id="@+id/tryAgain"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="129dp"
+        android:layout_height="54dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:onClick="tryAgain"
+        android:text="@string/take_pic_again"
+        android:textColor="@android:color/background_light"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/analysisMessage" />
+
+    <Button
+        android:id="@+id/analysis"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="129dp"
+        android:layout_height="54dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:onClick="pickScan"
+        android:text="@string/analyze"
+        android:textColor="@android:color/background_light"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tryAgain"
+        app:layout_constraintTop_toBottomOf="@+id/analysisMessage" />
+
     <ImageView
         android:id="@+id/croppedImage"
         android:layout_width="331dp"

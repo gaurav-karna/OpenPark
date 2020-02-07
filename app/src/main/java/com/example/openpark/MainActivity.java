@@ -14,8 +14,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-//import android.os.Parcelable;
-//import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.view.View;
 
@@ -28,16 +26,13 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-//import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-//import java.util.Calendar;
 import java.util.Date;
 
-import static android.os.Environment.getExternalStoragePublicDirectory;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -47,6 +42,9 @@ public class MainActivity extends AppCompatActivity {
 
     // self location passed into map
     public static final String SELF_LOC = "com.exmaple.OpenPark.SELF_LOC";
+
+    // save instance of class
+    private static MainActivity instance;
 
     // used to get location of user, and define a radius from which we will get geopoints
     private FusedLocationProviderClient fusedLocationClient;
@@ -72,6 +70,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // setting instance
+        instance = this;
+
         /* TODO: correctly init currentCity
         When implementing the Users model in the future, it would be useful to have a private
         variable dedicated to storing the user's city. Currently, it is hard set to 'montreal'
@@ -114,6 +116,10 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    public static MainActivity getInstance() {
+        return instance;
+    }
+
     // Starts the ParkMap activity, opens the Map API, populating it with info from DB
     public void triggerMap (View view) {
         Intent trigger = new Intent(this, ParkMap.class);
@@ -145,8 +151,26 @@ public class MainActivity extends AppCompatActivity {
         startActivity(trigger);
     }
 
-    // Starts the scanning mechanism - Camera intent & Cropping
+    public void pickScan (View view) {
+        final String[] options = {"Camera", "Photo Library"};
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("How would you like to scan the sign?");
+        builder.setItems(options, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int picked) {
+                // the user clicked on colors[which]
+                if (options[picked].equals("Camera")) {
+                    dispatchTakePictureIntent(null);
+                } else if (options[picked].equals(("Photo Library"))) {
+
+                }
+            }
+        });
+        builder.show();
+    }
+
+    // Starts the scanning mechanism - Camera intent & Cropping
     static final int REQUEST_IMAGE_CAPTURE = 1;
     String currentPhotoPath;
 
@@ -203,7 +227,6 @@ public class MainActivity extends AppCompatActivity {
             } else if (requestCode == CROP_CODE) {
                 // delegate to analyze the cropped image
                 Intent analysis = new Intent(this, AnalysisWait.class);
-//                analysis.putExtras(data.getExtras());
                 analysis.putExtra("scaled_image", picUri.toString()); // add image to intent
                 startActivity(analysis);
             }
