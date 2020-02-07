@@ -63,8 +63,9 @@ public class ParkMap extends FragmentActivity implements OnMapReadyCallback {
 //        }
 //        System.out.println("Done");
 
-        // moving map to self_location (which will always be the first and only Location in SELF_LOC)
-        Location self_loc = (Location) intent.getParcelableArrayListExtra(MainActivity.SELF_LOC).get(0);
+        // moving map to self_location (will always be the first and only Location in SELF_LOC)
+        Location self_loc = (Location) intent.getParcelableArrayListExtra(
+                                              MainActivity.SELF_LOC).get(0);
         LatLng self_latlng = new LatLng(self_loc.getLatitude(), self_loc.getLongitude());
         mMap.addMarker(new MarkerOptions().position(self_latlng).title("Your Location"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(self_latlng, zoomLevel));
