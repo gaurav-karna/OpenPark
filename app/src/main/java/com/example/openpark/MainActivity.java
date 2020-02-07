@@ -58,10 +58,10 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestore DB_CLIENT = FirebaseFirestore.getInstance();
 
     // list of coordinates for parkings in a city
-    public ArrayList<Location> coords = new ArrayList<>();  // using Location because it's serializable
+    public ArrayList<Location> coords = new ArrayList<>();  // using Location b/c it's serializable
 
     // initing self location
-    public ArrayList<Location> self_location = new ArrayList<>(); // in reality, will only be 1 unit long
+    public ArrayList<Location> self_location = new ArrayList<>(); // will only be 1 unit long
 
     // some variables we will need for the take picture and crop mechanism
     static final int REQUEST_TAKE_PHOTO = 1;
@@ -97,10 +97,11 @@ public class MainActivity extends AppCompatActivity {
                             self_location.clear();
                             self_location.add(location);
                         } else { // let user know to try again in a few minutes
-                            AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this)
-                                    .create();
+                            AlertDialog alertDialog = new AlertDialog.Builder(
+                                    MainActivity.this).create();
                             alertDialog.setTitle("Could not get location");
-                            alertDialog.setMessage("We had trouble fetching your location. Try again in a few minutes!");
+                            alertDialog.setMessage("We had trouble fetching your location. " +
+                                    "Try again in a few minutes!");
                             alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
@@ -118,7 +119,8 @@ public class MainActivity extends AppCompatActivity {
         Intent trigger = new Intent(this, ParkMap.class);
 
 
-        // have a loading screen on main thread for 3 seconds, while GLOBAL coords and self_location populate
+        // have a loading screen on main thread for 3 seconds,
+        // while GLOBAL coords and self_location populate
         final ProgressDialog progress = new ProgressDialog(MainActivity.this);
         progress.setTitle("Loading...");
         progress.setMessage("Please wait while we fetch data from our servers...");
@@ -209,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /*
-    TODO: MAJOR: make Parking class, and instantiate that instead of just getting geopoint from query
+    TODO: MAJOR: make Parking class, and instantiate that rather than getting geopoint from query
     - this will allow us to display information about the parking upon clicking the pin in question
      */
 
@@ -232,10 +234,12 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                         } else {
-                            AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                            AlertDialog alertDialog = new AlertDialog.Builder(
+                                    MainActivity.this).create();
                             alertDialog.setTitle("Could not get information");
                             alertDialog.setMessage(
-                            "We had trouble getting some information. Check your network connectivity, or try again in a few minutes!");
+                            "We had trouble getting some information. Check your network " +
+                                    "connectivity, or try again in a few minutes!");
                             alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
@@ -254,18 +258,14 @@ public class MainActivity extends AppCompatActivity {
             Intent cropIntent = new Intent("com.android.camera.action.CROP");
             //indicate image type and Uri
             cropIntent.setDataAndType(picUri, "image/*");
+
             //set crop properties
             cropIntent.putExtra("crop", "true");
-            //indicate aspect of desired crop
-//            cropIntent.putExtra("aspectX", 1);
-//            cropIntent.putExtra("aspectY", 1);
-//            //indicate output X and Y
-//            cropIntent.putExtra("outputX", 256);
-//            cropIntent.putExtra("outputY", 256);
 
             //retrieve data on return
             cropIntent.putExtra("return-data", true);
             cropIntent.putExtra(MediaStore.EXTRA_OUTPUT, picUri);
+
             // adding permission so camera can write cropped image to provided Uri
             cropIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             cropIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
