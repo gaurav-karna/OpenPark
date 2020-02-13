@@ -163,7 +163,10 @@ public class MainActivity extends AppCompatActivity {
                 if (options[picked].equals("Camera")) {
                     dispatchTakePictureIntent(null);
                 } else if (options[picked].equals(("Photo Library"))) {
+                    // choose picture from gallery
 
+                    // crop picture
+                    cropPicture();
                 }
             }
         });
