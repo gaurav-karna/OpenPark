@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     // some variables we will need for the take picture and crop mechanism
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int CROP_CODE = 2;
+    static final int PHOTO_PICK_CODE = 3;
     private Uri picUri;
 
     @Override
@@ -164,9 +165,13 @@ public class MainActivity extends AppCompatActivity {
                     dispatchTakePictureIntent(null);
                 } else if (options[picked].equals(("Photo Library"))) {
                     // choose picture from gallery
-
-                    // crop picture
-                    cropPicture();
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                            android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+//                    galleryIntent.setType("image/*");
+//                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(Intent.createChooser(galleryIntent,
+                            "Select Picture"), PHOTO_PICK_CODE);
+                    // crop picture delegated to onActivityResult
                 }
             }
         });
@@ -232,6 +237,10 @@ public class MainActivity extends AppCompatActivity {
                 Intent analysis = new Intent(this, AnalysisWait.class);
                 analysis.putExtra("scaled_image", picUri.toString()); // add image to intent
                 startActivity(analysis);
+            } else if (requestCode == PHOTO_PICK_CODE) {
+                picUri = data.getData();
+                // crop picture
+                cropPicture();
             }
         }
     }
