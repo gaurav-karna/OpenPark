@@ -33,7 +33,7 @@
         android:layout_marginLeft="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
-        android:onClick="pickScan"
+        android:onClick="analyzeImage"
         android:text="@string/analyze"
         android:textColor="@android:color/background_light"
         android:textSize="18sp"
