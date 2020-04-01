@@ -30,19 +30,24 @@ public class AnalysisFinished extends AppCompatActivity {
         ocr.setText(analysisData.getString("ocrResult"));
 
         // construct probability list as text
-        String probabilityList = "";
-        float[] customResultList = analysisData.getFloatArray("customResult");
-        for (int i = 0; i < customResultList.length; i++) {
-            if (i < 5) {
-                probabilityList = probabilityList + customLabels[i] + ": " + customResultList[i] + "\n";
-            } else {
-                probabilityList = probabilityList + customResultList[i] + "\n";
-            }
+//        String probabilityList = "";
+//        float[] customResultList = analysisData.getFloatArray("customResult");
+//        for (int i = 0; i < customResultList.length; i++) {
+//            if (i < 5) {
+//                probabilityList = probabilityList + customLabels[i] + ": " + customResultList[i] + "\n";
+//            } else {
+//                probabilityList = probabilityList + customResultList[i] + "\n";
+//            }
+//        }
+        String labelList = "";
+        ArrayList<String> labelResults = analysisData.getStringArrayList("customResult");
+        for (String label : labelResults) {
+            labelList = labelList + label + "\n";
         }
 
         // set values for custom
         TextView custom = (TextView) findViewById(R.id.customText);
-        custom.setText(probabilityList);
+        custom.setText(labelList);
     }
 
     public void returnHome (View view) {

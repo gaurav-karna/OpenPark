@@ -33,13 +33,18 @@ import com.google.firebase.ml.custom.FirebaseModelInterpreter;
 import com.google.firebase.ml.custom.FirebaseModelInterpreterOptions;
 import com.google.firebase.ml.custom.FirebaseModelOutputs;
 import com.google.firebase.ml.vision.FirebaseVision;
+import com.google.firebase.ml.vision.automl.FirebaseAutoMLLocalModel;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.label.FirebaseVisionImageLabel;
+import com.google.firebase.ml.vision.label.FirebaseVisionImageLabeler;
+import com.google.firebase.ml.vision.label.FirebaseVisionOnDeviceAutoMLImageLabelerOptions;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class AnalysisWait extends AppCompatActivity {
 
@@ -55,16 +60,9 @@ public class AnalysisWait extends AppCompatActivity {
     // loading screen
     ProgressDialog loadingBox;
 
-    /* Input and output types of current model
-    [  1 512 512   3]
-    <class 'numpy.uint8'>
-    [ 1 40  4]
-    <class 'numpy.float32'>
-     */
-
     // variables to hold OCR and custom results
     FirebaseVisionText OCR_RESULTS;
-    FirebaseModelOutputs CUSTOM_RESULTS;
+    ArrayList<String> CUSTOM_RESULTS;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,108 +116,171 @@ public class AnalysisWait extends AppCompatActivity {
                                 loadingBox = ProgressDialog.show(AnalysisWait.this,
                                         "Processing 2/2", "Analyzing image...",
                                         true);
-
-                                // FirebaseCustomRemoteModel inherits from FirebaseRemoteModel
-                                final FirebaseCustomRemoteModel remoteModel =
-                                        new FirebaseCustomRemoteModel.Builder(CURRENT_MODEL_NAME)
-                                                .build();
-
-                                // setting up Local fallback
-                                final FirebaseCustomLocalModel localModel = new FirebaseCustomLocalModel.Builder()
-                                        .setAssetFilePath(MODEL_PATH)
+                                final FirebaseAutoMLLocalModel localModel = new FirebaseAutoMLLocalModel.Builder()
+                                        .setAssetFilePath("app/src/main/assets/tflite_metadata.json")
                                         .build();
 
-                                // if no model in assets, then get from MLKit
-                                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder()
-                                        .requireWifi()
-                                        .build();
-                                FirebaseModelManager.getInstance().download(remoteModel, conditions)
-                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                            @Override
-                                            public void onComplete(@NonNull Task<Void> task) {
-                                                return;     // updated model if needed.
-                                            }
-                                        });
+                                FirebaseVisionImageLabeler labeler;
+                                try {
+                                    FirebaseVisionOnDeviceAutoMLImageLabelerOptions options =
+                                            new FirebaseVisionOnDeviceAutoMLImageLabelerOptions.Builder(localModel)
+                                                    .setConfidenceThreshold(0.7f)  // Evaluate your model in the Firebase console
+                                                    // to determine an appropriate value.
+                                                    .build();
+                                    labeler = FirebaseVision.getInstance().getOnDeviceAutoMLImageLabeler(options);
 
-                                // checking if model is downloaded, and creating interpreter
-                                FirebaseModelManager.getInstance().isModelDownloaded(remoteModel)
-                                        .addOnSuccessListener(new OnSuccessListener<Boolean>() {
-                                            @Override
-                                            public void onSuccess(Boolean isDownloaded) {
-                                                // choose remote or local based on download
-                                                FirebaseModelInterpreterOptions options;
-                                                if (isDownloaded) {
-                                                    options = new FirebaseModelInterpreterOptions.Builder(remoteModel).build();
-                                                } else {
-                                                    options = new FirebaseModelInterpreterOptions.Builder(localModel).build();
-                                                }
-                                                try {
-                                                    FirebaseModelInterpreter mlInterpreter =
-                                                            FirebaseModelInterpreter.getInstance(options);
-                                                    FirebaseModelInputOutputOptions inputOutputOptions =
-                                                            new FirebaseModelInputOutputOptions.Builder()
-                                                                    .setInputFormat(0,
-                                                                            FirebaseModelDataType.INT32,
-                                                                            new int[]{1, 512, 512, 3})
-                                                                    .setOutputFormat(0,
-                                                                            FirebaseModelDataType.FLOAT32,
-                                                                            new int[]{1, 40, 4})
-                                                                    .build();
+                                    FirebaseVisionImage image;
 
-                                                    // building input of image to analyze
-                                                    int[][][][] modelInput = getScaledImageValue();
-                                                    // fault tolerance
-                                                    if (modelInput == null) {
-                                                        loadingBox.dismiss();
-                                                        loadingBox = ProgressDialog.show(AnalysisWait.this,
-                                                                "Failure Encountered",
-                                                                "Input creation failed, returning to home...",
-                                                                true);
-                                                        // delay of 1.5 seconds post failure
-                                                        timerDelayRemoveDialog(1500, loadingBox);
-                                                        finish();
+                                    image = FirebaseVisionImage.fromFilePath(AnalysisWait.this, imageUri);
+
+                                    labeler.processImage(image)
+                                            .addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionImageLabel>>() {
+                                                @Override
+                                                public void onSuccess(List<FirebaseVisionImageLabel> labels) {
+                                                    // Task completed successfully
+                                                    loadingBox.dismiss();
+                                                    ArrayList<String> labelResults = new ArrayList<>();
+                                                    for (FirebaseVisionImageLabel label: labels) {
+                                                        labelResults.add(label.getText() + " - " + label.getConfidence());
                                                     }
-
-                                                    // passing inputs and running the model
-                                                    FirebaseModelInputs inputs = new FirebaseModelInputs.Builder()
-                                                            .add(modelInput)
-                                                            .build();
-                                                    mlInterpreter.run(inputs, inputOutputOptions)
-                                                            .addOnSuccessListener(
-                                                                    new OnSuccessListener<FirebaseModelOutputs>() {
-                                                                        @Override
-                                                                        public void onSuccess(FirebaseModelOutputs result) {
-                                                                            CUSTOM_RESULTS = result;
-                                                                            analysisFinished();
-                                                                        }
-                                                                    })
-                                                            .addOnFailureListener(
-                                                                    new OnFailureListener() {
-                                                                        @Override
-                                                                        public void onFailure(@NonNull Exception e) {
-                                                                            e.printStackTrace();
-                                                                            loadingBox.dismiss();
-                                                                            loadingBox = ProgressDialog.show(AnalysisWait.this,
-                                                                                    "Analysis Failed",
-                                                                                    "Image analysis failed, returning to home...",
-                                                                                    true);
-                                                                            // delay of 1.5 seconds post failure
-                                                                            timerDelayRemoveDialog(1500, loadingBox);
-                                                                            finish();
-                                                                        }
-                                                                    });
-                                                } catch (FirebaseMLException e) {
-                                                    e.printStackTrace();
+                                                    CUSTOM_RESULTS = labelResults;
+                                                    analysisFinished();
+                                                }
+                                            })
+                                            .addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull Exception e) {
                                                     loadingBox.dismiss();
                                                     loadingBox = ProgressDialog.show(AnalysisWait.this,
-                                                            "Failure Encountered",
-                                                            "Custom interpreter failed, returning to home...",
+                                                            "Image Analysis Failed",
+                                                            "Custom analysis failed, returning to home...",
                                                             true);
                                                     // delay of 1.5 seconds post failure
                                                     timerDelayRemoveDialog(1500, loadingBox);
                                                 }
-                                            }
-                                        });
+                                            });
+
+                                } catch (FirebaseMLException e) {
+                                    loadingBox.dismiss();
+                                    loadingBox = ProgressDialog.show(AnalysisWait.this,
+                                            "Failure Encountered",
+                                            "On device labeller failed, returning to home...",
+                                            true);
+                                    // delay of 1.5 seconds post failure
+                                    timerDelayRemoveDialog(1500, loadingBox);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    loadingBox.dismiss();
+                                    loadingBox = ProgressDialog.show(AnalysisWait.this,
+                                            "FirebaseImage Uri Failure Encountered",
+                                            "IO Exception with Firebase Uri, returning to home...",
+                                            true);
+                                    // delay of 1.5 seconds post failure
+                                    timerDelayRemoveDialog(1500, loadingBox);
+                                }
+
+
+//                                // FirebaseCustomRemoteModel inherits from FirebaseRemoteModel
+//                                final FirebaseCustomRemoteModel remoteModel =
+//                                        new FirebaseCustomRemoteModel.Builder(CURRENT_MODEL_NAME)
+//                                                .build();
+//
+//                                // setting up Local fallback
+//                                final FirebaseCustomLocalModel localModel = new FirebaseCustomLocalModel.Builder()
+//                                        .setAssetFilePath(MODEL_PATH)
+//                                        .build();
+//
+//                                // if no model in assets, then get from MLKit
+//                                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder()
+//                                        .requireWifi()
+//                                        .build();
+//                                FirebaseModelManager.getInstance().download(remoteModel, conditions)
+//                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+//                                            @Override
+//                                            public void onComplete(@NonNull Task<Void> task) {
+//                                                return;     // updated model if needed.
+//                                            }
+//                                        });
+//
+//                                // checking if model is downloaded, and creating interpreter
+//                                FirebaseModelManager.getInstance().isModelDownloaded(remoteModel)
+//                                        .addOnSuccessListener(new OnSuccessListener<Boolean>() {
+//                                            @Override
+//                                            public void onSuccess(Boolean isDownloaded) {
+//                                                // choose remote or local based on download
+//                                                FirebaseModelInterpreterOptions options;
+//                                                if (isDownloaded) {
+//                                                    options = new FirebaseModelInterpreterOptions.Builder(remoteModel).build();
+//                                                } else {
+//                                                    options = new FirebaseModelInterpreterOptions.Builder(localModel).build();
+//                                                }
+//                                                try {
+//                                                    FirebaseModelInterpreter mlInterpreter =
+//                                                            FirebaseModelInterpreter.getInstance(options);
+//                                                    FirebaseModelInputOutputOptions inputOutputOptions =
+//                                                            new FirebaseModelInputOutputOptions.Builder()
+//                                                                    .setInputFormat(0,
+//                                                                            FirebaseModelDataType.INT32,
+//                                                                            new int[]{1, 512, 512, 3})
+//                                                                    .setOutputFormat(0,
+//                                                                            FirebaseModelDataType.FLOAT32,
+//                                                                            new int[]{1, 40, 4})
+//                                                                    .build();
+//
+//                                                    // building input of image to analyze
+//                                                    int[][][][] modelInput = getScaledImageValue();
+//                                                    // fault tolerance
+//                                                    if (modelInput == null) {
+//                                                        loadingBox.dismiss();
+//                                                        loadingBox = ProgressDialog.show(AnalysisWait.this,
+//                                                                "Failure Encountered",
+//                                                                "Input creation failed, returning to home...",
+//                                                                true);
+//                                                        // delay of 1.5 seconds post failure
+//                                                        timerDelayRemoveDialog(1500, loadingBox);
+//                                                        finish();
+//                                                    }
+//
+//                                                    // passing inputs and running the model
+//                                                    FirebaseModelInputs inputs = new FirebaseModelInputs.Builder()
+//                                                            .add(modelInput)
+//                                                            .build();
+//                                                    mlInterpreter.run(inputs, inputOutputOptions)
+//                                                            .addOnSuccessListener(
+//                                                                    new OnSuccessListener<FirebaseModelOutputs>() {
+//                                                                        @Override
+//                                                                        public void onSuccess(FirebaseModelOutputs result) {
+//                                                                            CUSTOM_RESULTS = result;
+//                                                                            analysisFinished();
+//                                                                        }
+//                                                                    })
+//                                                            .addOnFailureListener(
+//                                                                    new OnFailureListener() {
+//                                                                        @Override
+//                                                                        public void onFailure(@NonNull Exception e) {
+//                                                                            e.printStackTrace();
+//                                                                            loadingBox.dismiss();
+//                                                                            loadingBox = ProgressDialog.show(AnalysisWait.this,
+//                                                                                    "Analysis Failed",
+//                                                                                    "Image analysis failed, returning to home...",
+//                                                                                    true);
+//                                                                            // delay of 1.5 seconds post failure
+//                                                                            timerDelayRemoveDialog(1500, loadingBox);
+//                                                                            finish();
+//                                                                        }
+//                                                                    });
+//                                                } catch (FirebaseMLException e) {
+//                                                    e.printStackTrace();
+//                                                    loadingBox.dismiss();
+//                                                    loadingBox = ProgressDialog.show(AnalysisWait.this,
+//                                                            "Failure Encountered",
+//                                                            "Custom interpreter failed, returning to home...",
+//                                                            true);
+//                                                    // delay of 1.5 seconds post failure
+//                                                    timerDelayRemoveDialog(1500, loadingBox);
+//                                                }
+//                                            }
+//                                        });
 
                             }
                         })
@@ -246,12 +307,12 @@ public class AnalysisWait extends AppCompatActivity {
         Bundle analysisData = new Bundle();
         analysisData.putString("ocrResult", OCR_RESULTS.getText());
 
-        // building the custom result by compiling nested probabilities in float[][][] output
-        float[][] output = CUSTOM_RESULTS.getOutput(0);
-        float[] probabilities = output[0];
-
-        analysisData.putFloatArray("customResult", probabilities);
-
+//        // building the custom result by compiling nested probabilities in float[][][] output
+//        float[][] output = CUSTOM_RESULTS.getOutput(0);
+//        float[] probabilities = output[0];
+//
+//        analysisData.putFloatArray("customResult", probabilities);
+        analysisData.putStringArrayList("customResult", CUSTOM_RESULTS);
         viewAnalysisResults.putExtras(analysisData);
         startActivity(viewAnalysisResults);
     }

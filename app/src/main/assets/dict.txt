@@ -1,0 +1,6 @@
+background
+no_stopping
+parking
+no_parking
+parking_exception
+sectors
