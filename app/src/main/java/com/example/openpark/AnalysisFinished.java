@@ -29,16 +29,7 @@ public class AnalysisFinished extends AppCompatActivity {
         TextView ocr = (TextView) findViewById(R.id.ocrText);
         ocr.setText(analysisData.getString("ocrResult"));
 
-        // construct probability list as text
-//        String probabilityList = "";
-//        float[] customResultList = analysisData.getFloatArray("customResult");
-//        for (int i = 0; i < customResultList.length; i++) {
-//            if (i < 5) {
-//                probabilityList = probabilityList + customLabels[i] + ": " + customResultList[i] + "\n";
-//            } else {
-//                probabilityList = probabilityList + customResultList[i] + "\n";
-//            }
-//        }
+        // construct label list as text
         String labelList = "";
         ArrayList<String> labelResults = analysisData.getStringArrayList("customResult");
         for (String label : labelResults) {
