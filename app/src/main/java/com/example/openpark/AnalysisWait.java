@@ -39,6 +39,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class AnalysisWait extends AppCompatActivity {
 
@@ -196,6 +197,7 @@ public class AnalysisWait extends AppCompatActivity {
                                                                     new OnFailureListener() {
                                                                         @Override
                                                                         public void onFailure(@NonNull Exception e) {
+                                                                            e.printStackTrace();
                                                                             loadingBox.dismiss();
                                                                             loadingBox = ProgressDialog.show(AnalysisWait.this,
                                                                                     "Analysis Failed",
@@ -238,7 +240,20 @@ public class AnalysisWait extends AppCompatActivity {
 
     // method to pass intent and continue flow after models are done executing
     private void analysisFinished() {
-        // OCR
+        // OCR and custom results stored in global variables
+        Intent viewAnalysisResults = new Intent(this, AnalysisFinished.class);
+        // bundle the analysis Data
+        Bundle analysisData = new Bundle();
+        analysisData.putString("ocrResult", OCR_RESULTS.getText());
+
+        // building the custom result by compiling nested probabilities in float[][][] output
+        float[][] output = CUSTOM_RESULTS.getOutput(0);
+        float[] probabilities = output[0];
+
+        analysisData.putFloatArray("customResult", probabilities);
+
+        viewAnalysisResults.putExtras(analysisData);
+        startActivity(viewAnalysisResults);
     }
 
     // creates input array for ML model
@@ -246,7 +261,7 @@ public class AnalysisWait extends AppCompatActivity {
         int[][][][] input = null;
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-            bitmap = Bitmap.createScaledBitmap(bitmap, 224, 224, true);
+            bitmap = Bitmap.createScaledBitmap(bitmap, 512, 512, true);
 
             int batchNum = 0;
             input = new int[1][512][512][3];
@@ -256,9 +271,13 @@ public class AnalysisWait extends AppCompatActivity {
                     // Normalize channel values to [-1.0, 1.0]. This requirement varies by
                     // model. For example, some models might require values to be normalized
                     // to the range [0.0, 1.0] instead.
-                    input[batchNum][x][y][0] = (Color.red(pixel) - 127) / 128;
-                    input[batchNum][x][y][1] = (Color.green(pixel) - 127) / 128;
-                    input[batchNum][x][y][2] = (Color.blue(pixel) - 127) / 128;
+//                    input[batchNum][x][y][0] = (Color.red(pixel) - 127) / 128;
+//                    input[batchNum][x][y][1] = (Color.green(pixel) - 127) / 128;
+//                    input[batchNum][x][y][2] = (Color.blue(pixel) - 127) / 128;
+                    // quantized calculation
+                    input[batchNum][x][y][0] = Color.red(pixel);
+                    input[batchNum][x][y][1] = Color.green(pixel);
+                    input[batchNum][x][y][2] = Color.blue(pixel);
                 }
             }
         } catch (IOException e) {

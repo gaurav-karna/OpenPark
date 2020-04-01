@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#EE4848"
+    tools:context=".AnalysisFinished">
+
+    <Button
+        android:id="@+id/tryAgain2"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="129dp"
+        android:layout_height="54dp"
+        android:layout_marginBottom="16dp"
+        android:onClick="returnHome"
+        android:text="@string/return_home"
+        android:textColor="@android:color/background_light"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/customText" />
+
+    <TextView
+        android:id="@+id/analysisFinTitle"
+        android:layout_width="326dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="596dp"
+        android:gravity="center"
+        android:text="@string/analysis_fin_title"
+        android:textAllCaps="false"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.494"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.523" />
+
+    <TextView
+        android:id="@+id/analysisViewResults"
+        android:layout_width="278dp"
+        android:layout_height="49dp"
+        android:gravity="center"
+        android:text="@string/view_results"
+        android:textAllCaps="false"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/analysisFinTitle" />
+
+    <TextView
+        android:id="@+id/ocrText"
+        android:layout_width="316dp"
+        android:layout_height="199dp"
+        android:layout_marginTop="32dp"
+        android:text="TextView"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.515"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/analysisViewResults" />
+
+    <TextView
+        android:id="@+id/customText"
+        android:layout_width="316dp"
+        android:layout_height="199dp"
+        android:layout_marginTop="28dp"
+        android:text="TextView"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.515"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ocrText" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

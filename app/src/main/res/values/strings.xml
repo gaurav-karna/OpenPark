@@ -8,4 +8,7 @@
     <string name="production">A Gaurav Karna Production</string>
     <string name="title_activity_park_map">Map</string>
     <string name="analysis_message">Your cropped image has been scaled accordingly.</string>
+    <string name="analysis_fin_title">Analysis Complete</string>
+    <string name="view_results">View your results below:</string>
+    <string name="return_home">Home</string>
 </resources>
