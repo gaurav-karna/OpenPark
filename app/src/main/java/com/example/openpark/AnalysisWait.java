@@ -329,9 +329,13 @@ public class AnalysisWait extends AppCompatActivity {
 
         float[][][] output = CUSTOM_RESULTS.getOutput(0);
         float[][] resultSet = output[0];    // max length of 40, subarrays of 4
-        float[] probabilities = resultSet[0];
+        ArrayList<float[]> probabilities = new ArrayList<>();
+        // passing all results in Serializable array list
+        for (float[] result : resultSet) {
+            probabilities.add(result);
+        }
 
-        analysisData.putFloatArray("customResult", probabilities);
+        analysisData.putSerializable("customResult", probabilities);
 
 
         viewAnalysisResults.putExtras(analysisData);
@@ -340,14 +344,14 @@ public class AnalysisWait extends AppCompatActivity {
 
     // creates input array for ML Model
     private byte[][][][] getScaledImageValue() {
-        int[][][][] input = null;
+//        int[][][][] input = null;
         byte[][][][] byteInput;
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
             bitmap = Bitmap.createScaledBitmap(bitmap, 512, 512, true);
 
             int batchNum = 0;
-            input = new int[1][512][512][3];
+//            input = new int[1][512][512][3];
             byteInput = new byte [1][512][512][3];
             int byteCounter = 0;
             for (int x = 0; x < 512; x++) {
@@ -360,13 +364,13 @@ public class AnalysisWait extends AppCompatActivity {
 //                    input[batchNum][x][y][1] = (Color.green(pixel) - 127) / 128;
 //                    input[batchNum][x][y][2] = (Color.blue(pixel) - 127) / 128;
                     // quantized calculation
-                    input[batchNum][x][y][0] = Color.red(pixel);
+//                    input[batchNum][x][y][0] = Color.red(pixel);
                     byteInput [batchNum][x][y][0] = (byte) Color.red(pixel);
 
-                    input[batchNum][x][y][1] = Color.green(pixel);
+//                    input[batchNum][x][y][1] = Color.green(pixel);
                     byteInput [batchNum][x][y][0] = (byte) Color.green(pixel);
 
-                    input[batchNum][x][y][2] = Color.blue(pixel);
+//                    input[batchNum][x][y][2] = Color.blue(pixel);
                     byteInput [batchNum][x][y][0] = (byte) Color.blue(pixel);
                 }
             }

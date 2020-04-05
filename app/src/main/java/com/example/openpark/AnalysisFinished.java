@@ -13,7 +13,13 @@ import java.util.ArrayList;
 public class AnalysisFinished extends AppCompatActivity {
 
     // custom labels defined in arrayList below
-    String[] customLabels = {"no_parking", "no_stopping", "parking", "parking_exception", "sectors"};
+    String[] customLabels = {
+            "no_parking",
+            "no_stopping",
+            "parking",
+            "parking_exception",
+            "sectors"
+    };
 
     // custom and ocr results transferred via intent
 
@@ -42,13 +48,28 @@ public class AnalysisFinished extends AppCompatActivity {
 
         // construct probability list as text
         String probabilityList = "";
-        float[] customResultList = analysisData.getFloatArray("customResult");
-        for (int i = 0; i < customResultList.length; i++) {
-            if (i < 5) {
-                probabilityList = probabilityList + customLabels[i] + ": " + customResultList[i] + "\n";
+        ArrayList<float[]> customResultList = (ArrayList<float[]>) analysisData.getSerializable("customResult");
+        // customResultList is a list of all the subarrays of results (max size 40)
+
+        for (int i = 0; i < customResultList.size(); i++) {
+            if (i < customLabels.length) {
+                // concatenate with a label
+                probabilityList = probabilityList + customLabels[i] + ": ";
+                for (float stat : customResultList.get(i)) {
+                    probabilityList = probabilityList + stat + ", ";
+                }
+                // concatenate with a newline
+                probabilityList = probabilityList + "\n";
             } else {
-                probabilityList = probabilityList + customResultList[i] + "\n";
+                // concatenate with the counter
+                probabilityList = probabilityList + (i+1) + ": ";
+                for (float stat : customResultList.get(i)) {
+                    probabilityList = probabilityList + stat + ", ";
+                }
+                // concatenate with a newline
+                probabilityList = probabilityList + "\n";
             }
+
         }
 
         // set values for custom
