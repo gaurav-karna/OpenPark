@@ -35,46 +35,15 @@ public class AnalysisFinished extends AppCompatActivity {
         TextView ocr = (TextView) findViewById(R.id.ocrText);
         ocr.setText(analysisData.getString("ocrResult"));
 
-//        // construct label list as text
-//        String labelList = "";
-//        ArrayList<String> labelResults = analysisData.getStringArrayList("customResult");
-//        for (String label : labelResults) {
-//            labelList = labelList + label + "\n";
-//        }
-//
-//        // set values for custom
-//        TextView custom = (TextView) findViewById(R.id.customText);
-//        custom.setText(labelList);
-
-        // construct probability list as text
-        String probabilityList = "";
-        ArrayList<float[]> customResultList = (ArrayList<float[]>) analysisData.getSerializable("customResult");
-        // customResultList is a list of all the subarrays of results (max size 40)
-
-        for (int i = 0; i < customResultList.size(); i++) {
-            if (i < customLabels.length) {
-                // concatenate with a label
-                probabilityList = probabilityList + customLabels[i] + ": ";
-                for (float stat : customResultList.get(i)) {
-                    probabilityList = probabilityList + stat + ", ";
-                }
-                // concatenate with a newline
-                probabilityList = probabilityList + "\n";
-            } else {
-                // concatenate with the counter
-                probabilityList = probabilityList + (i+1) + ": ";
-                for (float stat : customResultList.get(i)) {
-                    probabilityList = probabilityList + stat + ", ";
-                }
-                // concatenate with a newline
-                probabilityList = probabilityList + "\n";
-            }
-
-        }
 
         // set values for custom
+        // cleaning data
+        String customResults = "";
+        for (String aResult : analysisData.getStringArrayList("customResult")) {
+            customResults = customResults + aResult;
+        }
         TextView custom = (TextView) findViewById(R.id.customText);
-        custom.setText(probabilityList);
+        custom.setText(customResults);
     }
 
     public void returnHome (View view) {
