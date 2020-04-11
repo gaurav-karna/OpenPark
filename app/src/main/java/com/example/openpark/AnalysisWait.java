@@ -33,6 +33,22 @@ import java.util.List;
 
 public class AnalysisWait extends AppCompatActivity {
 
+    // Global Vars for fuzzy search
+    public boolean NO_PARKING_FOUND;
+    public boolean NO_STOPPING_FOUND;
+    public boolean PARKING_FOUND;
+    public boolean PARKING_EXCEPTION_FOUND;
+    public boolean SECTORS_FOUND;
+
+    // custom labels defined in arrayList below
+    private String[] customLabels = {
+            "no_parking",
+            "no_stopping",
+            "parking",
+            "parking_exception",
+            "sectors"
+    };
+
     // image to analyze URI
     private static Uri imageUri;
 
@@ -98,7 +114,7 @@ public class AnalysisWait extends AppCompatActivity {
                                 loadingBox.dismiss();
                                 // update loading box (Stage 2, custom model)
                                 loadingBox = ProgressDialog.show(AnalysisWait.this,
-                                        "Processing 2/2", "Analyzing image...",
+                                        "Processing 2/3", "Analyzing image...",
                                         true);
 
                                 try {
@@ -108,6 +124,12 @@ public class AnalysisWait extends AppCompatActivity {
                                     );
                                     CUSTOM_RESULTS_STRING = customResults;
                                     loadingBox.dismiss();
+
+                                    // update loading box (Stage 3, OCR Fuzzy search)
+                                    loadingBox = ProgressDialog.show(AnalysisWait.this,
+                                            "Processing 3/3", "Parsing text...",
+                                            true);
+
                                     analysisFinished();
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -139,6 +161,51 @@ public class AnalysisWait extends AppCompatActivity {
 
     // method to pass intent and continue flow after models are done executing
     private void analysisFinished() {
+
+        // string arrayList has all labels over 50% confidence
+        for (String aResult : CUSTOM_RESULTS_STRING) {
+            // check which labels exist in the arrayList by cross-referencing all possible labels
+            if (aResult.contains(customLabels[0])) {
+                NO_PARKING_FOUND = true;
+            }
+            if (aResult.contains(customLabels[1])) {
+                NO_STOPPING_FOUND = true;
+            }
+            if (aResult.contains(customLabels[2])) {
+                PARKING_FOUND = true;
+            }
+            if (aResult.contains(customLabels[3])) {
+                PARKING_EXCEPTION_FOUND = true;
+            }
+            if (aResult.contains(customLabels[4])) {
+                SECTORS_FOUND = true;
+            }
+        }
+
+        // global booleans have been initialized, it's now time to do the fuzzy search
+        // time to initialize parameter booleans
+        boolean HOURS_RANGE_TEXTPARAM = false;
+        boolean DAYS_OF_WEEK_TEXTPARAM = false;
+        boolean TIME_LIMIT_TEXTPARAM = false;
+        boolean TIME_OF_YEAR_TEXTPARAM = false;
+        boolean SECTORS_TEXTPARAM = false;
+
+        // convert all Blocks into a List of Lines; used Lines will be removed from the list
+        ArrayList<FirebaseVisionText.Line> ocrLines = new ArrayList<>();
+        for (FirebaseVisionText.TextBlock currentBlock : OCR_RESULTS.getTextBlocks()) {
+            for (FirebaseVisionText.Line lineToAdd : currentBlock.getLines()) {
+                ocrLines.add(lineToAdd);
+            }
+        }
+
+        // TODO:
+        // 1. Build similarity searches for all parameters in separate .java file
+        //      - look into fuzzy search API or library
+        // 2. Go through line by line searching for parameters, and save them in above String vars
+        // 3. Build String variables to send to AnalysisFinished class for display
+        // 4. Take out % results from CUSTOM_RESULTS - we don't need that to display anymore
+        // 5. Fix display and tidy up code in AnalysisFinished class
+
         // OCR and custom results stored in global variables
         Intent viewAnalysisResults = new Intent(this, AnalysisFinished.class);
         // bundle the analysis Data
