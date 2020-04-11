@@ -129,8 +129,9 @@ public class AnalysisWait extends AppCompatActivity {
                                     loadingBox = ProgressDialog.show(AnalysisWait.this,
                                             "Processing 3/3", "Parsing text...",
                                             true);
-
+                                    // begin fuzzy search
                                     analysisFinished();
+
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                     loadingBox.dismiss();
@@ -215,6 +216,9 @@ public class AnalysisWait extends AppCompatActivity {
 
         analysisData.putStringArrayList("customResult", CUSTOM_RESULTS_STRING);
         viewAnalysisResults.putExtras(analysisData);
+
+        // close 3rd loading box before launching next activity
+        loadingBox.dismiss();
         startActivity(viewAnalysisResults);
     }
 
