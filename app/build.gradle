@@ -40,6 +40,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-ml-vision-automl:18.0.3'
     implementation 'com.google.firebase:firebase-ml-model-interpreter:22.0.1'
     implementation 'org.tensorflow:tensorflow-lite:+'
+    implementation 'me.xdrop:fuzzywuzzy:1.2.0'
 
 }
 
