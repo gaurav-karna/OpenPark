@@ -29,16 +29,30 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class AnalysisWait extends AppCompatActivity {
 
     // Global Vars for fuzzy search
-    public boolean NO_PARKING_FOUND;
-    public boolean NO_STOPPING_FOUND;
-    public boolean PARKING_FOUND;
-    public boolean PARKING_EXCEPTION_FOUND;
-    public boolean SECTORS_FOUND;
+    public boolean NO_PARKING_FOUND = false;
+    public boolean NO_STOPPING_FOUND = false;
+    public boolean PARKING_FOUND = false;
+    public boolean PARKING_EXCEPTION_FOUND = false;
+    public boolean SECTORS_FOUND = false;
+
+    // time to initialize parameter booleans
+    boolean HOURS_RANGE_TEXTPARAM = false;
+    boolean DAYS_OF_WEEK_TEXTPARAM = false;
+    boolean TIME_OF_YEAR_TEXTPARAM = false;
+    boolean TIME_LIMIT_TEXTPARAM = false;
+    boolean SECTORS_TEXTPARAM = false;
+
+    // global FuzzySearch initializer
+    OpenParkFuzzySearch lineProcesser;
+
+    // global Map of Strings to display and whether they were found or not (null if not)
+    HashMap<String, String> displayMapper;
 
     // custom labels defined in arrayList below
     private String[] customLabels = {
@@ -64,7 +78,9 @@ public class AnalysisWait extends AppCompatActivity {
     // variables to hold OCR and custom results
     FirebaseVisionText OCR_RESULTS;
     ArrayList<String> CUSTOM_RESULTS_STRING;
-    FirebaseModelOutputs CUSTOM_RESULTS;
+
+    // to pass into intent
+    String CUSTOM_RESULTS_PROCESSED;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,7 +101,7 @@ public class AnalysisWait extends AppCompatActivity {
 
     public void analyzeImage(View view) {
         // take user to loading screen while algo runs...
-        loadingBox = ProgressDialog.show(this, "Processing 1/2",
+        loadingBox = ProgressDialog.show(this, "Processing 1/3",
                 "Analyzing image...", true);
 
         // get image to analyze and instantiate into FireBase object
@@ -184,12 +200,10 @@ public class AnalysisWait extends AppCompatActivity {
         }
 
         // global booleans have been initialized, it's now time to do the fuzzy search
-        // time to initialize parameter booleans
-        boolean HOURS_RANGE_TEXTPARAM = false;
-        boolean DAYS_OF_WEEK_TEXTPARAM = false;
-        boolean TIME_LIMIT_TEXTPARAM = false;
-        boolean TIME_OF_YEAR_TEXTPARAM = false;
-        boolean SECTORS_TEXTPARAM = false;
+        lineProcesser = new OpenParkFuzzySearch();
+
+        // initialize the displayMapper
+        initializeDisplayMapper();
 
         // convert all Blocks into a List of Lines; used Lines will be removed from the list
         ArrayList<FirebaseVisionText.Line> ocrLines = new ArrayList<>();
@@ -199,22 +213,40 @@ public class AnalysisWait extends AppCompatActivity {
             }
         }
 
-        // TODO:
-        // 1. Build similarity searches for all parameters in separate .java file
-        //      - look into fuzzy search API or library
-        // 2. Go through line by line searching for parameters, and save them in above String vars
-        // 3. Build String variables to send to AnalysisFinished class for display
-        // 4. Take out % results from CUSTOM_RESULTS - we don't need that to display anymore
-        // 5. Fix display and tidy up code in AnalysisFinished class
+        // holder for all unused lines
+        ArrayList<FirebaseVisionText.Line> leftoverOCRLines = new ArrayList<>();
+
+        // iterate through all lines and feed into processLine method
+        for (FirebaseVisionText.Line currentLine : ocrLines) {
+            if (!(processLine(currentLine))) {
+                leftoverOCRLines.add(currentLine);
+            }
+        }
+
+        // at this point, unused Lines are in leftoverOCRLines
+        // constructing extra Information string
+        if (!(leftoverOCRLines.isEmpty())) {
+            String extraInfo = "";
+            for (FirebaseVisionText.Line currentLine : leftoverOCRLines) {
+                extraInfo += currentLine.getText() + "\n";
+            }
+            // adding extraInfo into displayMapper
+            displayMapper.put("extraInformation", extraInfo);
+        }
+
+        // TODO: future functionality, extract location from image
+
+        // construct output strings with non-null values in displayMapper
+        CUSTOM_RESULTS_PROCESSED = constructDisplayString();
 
         // OCR and custom results stored in global variables
         Intent viewAnalysisResults = new Intent(this, AnalysisFinished.class);
         // bundle the analysis Data
         Bundle analysisData = new Bundle();
-        analysisData.putString("ocrResult", OCR_RESULTS.getText());
+        analysisData.putString("ocrResult", CUSTOM_RESULTS_PROCESSED);
 
-
-        analysisData.putStringArrayList("customResult", CUSTOM_RESULTS_STRING);
+        // Blocking out percentages for right now
+//        analysisData.putStringArrayList("customResult", CUSTOM_RESULTS_STRING);
         viewAnalysisResults.putExtras(analysisData);
 
         // close 3rd loading box before launching next activity
@@ -222,6 +254,151 @@ public class AnalysisWait extends AppCompatActivity {
         startActivity(viewAnalysisResults);
     }
 
+    // process method for Lines
+    private boolean processLine(FirebaseVisionText.Line line) {
+        // cycle through methods unless marked as found
+
+        // search for time range
+        if (!HOURS_RANGE_TEXTPARAM) {
+            HOURS_RANGE_TEXTPARAM = lineProcesser.searchForTimeRange(line);
+            if (HOURS_RANGE_TEXTPARAM) {
+                displayMapper.put("timeOfDay", line.getText());
+                return true;
+            }
+        }
+
+        // search for days of week
+        if (!DAYS_OF_WEEK_TEXTPARAM) {
+            DAYS_OF_WEEK_TEXTPARAM = lineProcesser.searchForDaysOfWeek(line);
+            if (DAYS_OF_WEEK_TEXTPARAM) {
+                displayMapper.put("daysOfWeek", line.getText());
+                return true;
+            }
+        }
+
+        // search for months of year
+        if (!TIME_OF_YEAR_TEXTPARAM) {
+            TIME_OF_YEAR_TEXTPARAM = lineProcesser.searchForTimeOfYear(line);
+            if (TIME_OF_YEAR_TEXTPARAM) {
+                displayMapper.put("timeOfYear", line.getText());
+                return true;
+            }
+        }
+
+        // search for time limit
+        if (!TIME_LIMIT_TEXTPARAM) {
+            TIME_LIMIT_TEXTPARAM = lineProcesser.searchForTimeAllowed(line);
+            if (TIME_LIMIT_TEXTPARAM) {
+                displayMapper.put("timeLimit", line.getText());
+                return true;
+            }
+        }
+
+        // search for sector if PARKING_EXCEPTION and SECTORS are true
+        if ((SECTORS_FOUND && PARKING_EXCEPTION_FOUND) && (!SECTORS_TEXTPARAM)) {
+            SECTORS_TEXTPARAM = lineProcesser.searchForSector(line);
+            if (SECTORS_TEXTPARAM) {
+                displayMapper.put("sector", line.getText());
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void initializeDisplayMapper() {
+        displayMapper = new HashMap<>();
+        // can park
+        if (NO_PARKING_FOUND) {
+            displayMapper.put("canPark", "no");
+        } else if (PARKING_FOUND) {
+            displayMapper.put("canPark", "yes");
+        } else if (NO_STOPPING_FOUND) {
+            displayMapper.put("canPark", "stop");
+        }
+        // time of year
+        displayMapper.put("timeOfYear", null);
+
+        // days of week
+        displayMapper.put("daysOfWeek", null);
+
+        // time of days
+        displayMapper.put("timeOfDay", null);
+
+        // time limit
+        displayMapper.put("timeLimit", null);
+
+        // sector
+        displayMapper.put("sector", null);
+
+        // extra information
+        displayMapper.put("extraInformation", null);
+
+        // location
+        displayMapper.put("location", null);
+    }
+
+    // builds the String to pass into the ActivityFinished class
+    private String constructDisplayString() {
+        String display = "Park here?\n";
+
+        if (displayMapper.get("canPark") != null) {
+            if (displayMapper.get("canPark").equals("yes")) {
+                display += "- You can park here under conditions:\n";
+            } else if (displayMapper.get("canPark").equals("no")) {
+                display += "- You can't park here under conditions:\n";
+            } else if (displayMapper.get("canPark").equals("stop")) {
+                display += "- You can't stop here under conditions:\n";
+            }
+        } else {
+            display += "- None found\n";
+        }
+
+        // conditions
+        display += "\nConditions:\n";
+        boolean conditionsFound = false;       // one-time flag, otherwise 'None found'
+
+        // cycle through all conditions
+        if (displayMapper.get("timeOfYear") != null) {
+            conditionsFound = true;
+            display += "- During this time of year: " + displayMapper.get("timeOfYear") + "\n";
+        }
+
+        if (displayMapper.get("daysOfWeek") != null) {
+            conditionsFound = true;
+            display += "- On the day(s): " + displayMapper.get("daysOfWeek") + "\n";
+        }
+
+        if (displayMapper.get("timeOfDay") != null) {
+            conditionsFound = true;
+            display += "- In this time range of day: " + displayMapper.get("timeOfDay") + "\n";
+        }
+
+        if (displayMapper.get("timeLimit") != null) {
+            conditionsFound = true;
+            display += "- For this amount of time: " + displayMapper.get("timeLimit") + "\n";
+        }
+
+        if (displayMapper.get("sector") != null) {
+            conditionsFound = true;
+            display += "- Above don't apply if vehicle has permit: " +
+                    displayMapper.get("sector") + "\n";
+        }
+
+        if (!(conditionsFound)) {
+            display += "None found";
+        }
+
+        if (displayMapper.get("extraInformation") != null) {
+            display += "\nExtra Information found:\n" + displayMapper.get("extraInformation");
+        }
+
+        if (displayMapper.get("location") != null) {
+            display += "\nLocation: " + displayMapper.get("location");
+        }
+
+        return display;
+    }
 
     // delay timer for dialog boxes, then returns to home
     public void timerDelayRemoveDialog(long time, final Dialog d){

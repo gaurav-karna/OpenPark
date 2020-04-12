@@ -19,8 +19,7 @@
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/customText" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/analysisFinTitle"
@@ -37,7 +36,7 @@
         app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.523" />
+        app:layout_constraintVertical_bias="0.253" />
 
     <TextView
         android:id="@+id/analysisViewResults"
@@ -55,28 +54,15 @@
 
     <TextView
         android:id="@+id/ocrText"
-        android:layout_width="316dp"
-        android:layout_height="199dp"
-        android:layout_marginTop="32dp"
+        android:layout_width="382dp"
+        android:layout_height="507dp"
         android:text="TextView"
         android:textColor="@color/common_google_signin_btn_text_dark_default"
-        android:textSize="18sp"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@+id/tryAgain2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.515"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/analysisViewResults" />
-
-    <TextView
-        android:id="@+id/customText"
-        android:layout_width="316dp"
-        android:layout_height="199dp"
-        android:layout_marginTop="28dp"
-        android:text="TextView"
-        android:textColor="@color/common_google_signin_btn_text_dark_default"
-        android:textSize="18sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.515"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ocrText" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -12,7 +12,6 @@ import java.util.ArrayList;
 
 public class AnalysisFinished extends AppCompatActivity {
 
-    private String OCR_RESULTS;     // will hold the text results for sanitization
     private String OCR_RESULTS_DISPLAY;     // what the user will see after sanitization
 
     // custom labels defined in arrayList below
@@ -38,23 +37,18 @@ public class AnalysisFinished extends AppCompatActivity {
         // cleaning data
 
         // set custom results as text for now
-        TextView custom = (TextView) findViewById(R.id.customText);
+//        TextView custom = (TextView) findViewById(R.id.customText);
 
 
         TextView ocr = (TextView) findViewById(R.id.ocrText);   // set text values for OCR
-        OCR_RESULTS = analysisData.getString("ocrResult"); // store OCR Results
+        OCR_RESULTS_DISPLAY = analysisData.getString("ocrResult"); // store OCR Results
 
-        // perform sanitization with initialized boolean labels
-        makeSenseOfOCR();
 
         // set text results in OCR
-        ocr.setText(analysisData.getString(OCR_RESULTS_DISPLAY));
+        ocr.setText(OCR_RESULTS_DISPLAY);
 
     }
 
-    private static void makeSenseOfOCR () {
-        // use OCR_RESULTS and Global Booleans to find what relevant information OCR returned
-    }
 
     public void returnHome (View view) {
         Intent returnToHome = new Intent(this, MainActivity.class);
