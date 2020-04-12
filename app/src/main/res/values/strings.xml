@@ -11,4 +11,5 @@
     <string name="analysis_fin_title">Analysis Complete</string>
     <string name="view_results">View your results below:</string>
     <string name="return_home">Home</string>
+    <string name="feed_data">Upload Data</string>
 </resources>

@@ -245,12 +245,12 @@ public class AnalysisWait extends AppCompatActivity {
 
         // OCR and custom results stored in global variables
         Intent viewAnalysisResults = new Intent(this, AnalysisFinished.class);
+
         // bundle the analysis Data
         Bundle analysisData = new Bundle();
         analysisData.putString("ocrResult", CUSTOM_RESULTS_PROCESSED);
+        analysisData.putSerializable("displayMapper", displayMapper);       // for Firestore doc
 
-        // Blocking out percentages for right now
-//        analysisData.putStringArrayList("customResult", CUSTOM_RESULTS_STRING);
         viewAnalysisResults.putExtras(analysisData);
 
         // close 3rd loading box before launching next activity
@@ -345,8 +345,16 @@ public class AnalysisWait extends AppCompatActivity {
         // extra information
         displayMapper.put("extraInformation", null);
 
-        // location
-        displayMapper.put("location", null);
+        // check if location was instiated from camera intent
+        if (MainActivity.locationOfPictureTaken != null) {
+            String firestoreLocationRepresentation = "" +
+                    MainActivity.locationOfPictureTaken.getLatitude() + "," +
+                    MainActivity.locationOfPictureTaken.getLongitude();
+            // format of location representation in Firestore is "lat,long"
+            displayMapper.put("location", firestoreLocationRepresentation);
+        } else {
+            displayMapper.put("location", null);
+        }
     }
 
     // builds the String to pass into the ActivityFinished class

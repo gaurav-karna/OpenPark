@@ -19,7 +19,24 @@
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.148"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/feedData"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="169dp"
+        android:layout_height="52dp"
+        android:onClick="feedToFirestore"
+        android:text="@string/feed_data"
+        android:textColor="@android:color/background_light"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.89"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ocrText"
+        app:layout_constraintVertical_bias="0.333" />
 
     <TextView
         android:id="@+id/analysisFinTitle"

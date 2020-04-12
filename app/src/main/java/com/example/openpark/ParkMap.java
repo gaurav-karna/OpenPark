@@ -54,14 +54,6 @@ public class ParkMap extends FragmentActivity implements OnMapReadyCallback {
             mMap.addMarker(new MarkerOptions().position(loc_to_add));
         }
 
-//        System.out.println("Here is the list of coordinates pulled from Firestore");
-//        for (Location x: coords) {
-//            System.out.println("Latitude: " + x.getLatitude() + " Longitude: " + x.getLongitude());
-//        }
-//        for (Location x: self_location) {
-//            System.out.println("Self Location: " + x.getLatitude() + " " + x.getLongitude());
-//        }
-//        System.out.println("Done");
 
         // moving map to self_location (will always be the first and only Location in SELF_LOC)
         Location self_loc = (Location) intent.getParcelableArrayListExtra(

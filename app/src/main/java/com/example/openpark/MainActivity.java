@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
 
     // user's city location, used in querying the DB (HARD SET TO 'montreal' for now)
-    private String currentCity = "montreal";
+    public static String currentCity = "montreal";
 
     // Firestore client used to query
     private FirebaseFirestore DB_CLIENT = FirebaseFirestore.getInstance();
@@ -60,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
 
     // initing self location
     public ArrayList<Location> self_location = new ArrayList<>(); // will only be 1 unit long
+
+    // Location of picture taken - instantiated when camera is used to take picture of sign
+    public static Location locationOfPictureTaken = null;
 
     // some variables we will need for the take picture and crop mechanism
     static final int REQUEST_TAKE_PHOTO = 1;
@@ -231,6 +234,9 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUEST_IMAGE_CAPTURE) {
                 // Uri of pic saved in global var 'picUri'
+
+                // instantiate current Location as the location of the picture
+                locationOfPictureTaken = self_location.get(0);
                 cropPicture();
             } else if (requestCode == CROP_CODE) {
                 // delegate to analyze the cropped image
@@ -261,11 +267,23 @@ public class MainActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
 
                             for (QueryDocumentSnapshot document : task.getResult()) {
-                                GeoPoint gp = document.getGeoPoint("location");
-                                Location toAdd = new Location("");
-                                toAdd.setLatitude(gp.getLatitude());
-                                toAdd.setLongitude(gp.getLongitude());
-                                coords.add(toAdd);
+//                                GeoPoint gp = document.getGeoPoint("location");
+//                                Location toAdd = new Location("");
+//                                toAdd.setLatitude(gp.getLatitude());
+//                                toAdd.setLongitude(gp.getLongitude());
+                                // Location is a String in Firestore now (Apr. 2020)
+                                String parkLocation = document.getString("location");
+                                if (parkLocation.equals("None")) {
+                                    continue;
+                                } else {
+                                    // parse location into Location object to feed into GMaps
+                                    Location toAdd = new Location("");  // no provider since current location is not needed for query
+                                    String[] parkLocationCoords = parkLocation.split(",");  // according to format set in AnalysisWait
+                                    // parse lat and long as doubles and add them into toAdd
+                                    toAdd.setLatitude(Double.parseDouble(parkLocationCoords[0]));
+                                    toAdd.setLongitude(Double.parseDouble(parkLocationCoords[1]));
+                                    coords.add(toAdd);
+                                }
                             }
 
                         } else {
