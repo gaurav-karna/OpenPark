@@ -140,7 +140,7 @@ public class OpenParkFuzzySearch {
     // search for sector number
     public boolean searchForSector (FirebaseVisionText.Line line) {
         String searchLine = line.getText();
-        if (searchLine.matches("\\d.*")) {      // check if line starts with number
+        if (searchLine.matches("\\d.*")) {      // check if line is just number
             try {
                 Integer.parseInt(searchLine);       // just number - most likely is the sector #
                 return true;

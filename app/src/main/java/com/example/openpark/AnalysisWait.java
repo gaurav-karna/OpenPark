@@ -48,6 +48,10 @@ public class AnalysisWait extends AppCompatActivity {
     boolean TIME_LIMIT_TEXTPARAM = false;
     boolean SECTORS_TEXTPARAM = false;
 
+    // since multiple sectors could be on a sign, we append to this string and then add to
+    // displayMapper if not null
+    String SECTOR_DETECTED_SIGNS = null;
+
     // global FuzzySearch initializer
     OpenParkFuzzySearch lineProcesser;
 
@@ -295,10 +299,17 @@ public class AnalysisWait extends AppCompatActivity {
         }
 
         // search for sector if PARKING_EXCEPTION and SECTORS are true
-        if ((SECTORS_FOUND && PARKING_EXCEPTION_FOUND) && (!SECTORS_TEXTPARAM)) {
+        if ((SECTORS_FOUND && PARKING_EXCEPTION_FOUND)) {
+            // No check for SECTORS_TEXTPARAM because there could be multiple sectors
             SECTORS_TEXTPARAM = lineProcesser.searchForSector(line);
             if (SECTORS_TEXTPARAM) {
-                displayMapper.put("sector", line.getText());
+                // multiple sectors - append to Global String then set "sector" to global var if !null
+                // first time detected, set to not null and append
+                if (SECTOR_DETECTED_SIGNS == null) {
+                    SECTOR_DETECTED_SIGNS = line.getText();
+                } else {    // not null, so just append
+                    SECTOR_DETECTED_SIGNS += ", " + line.getText();
+                }
                 return true;
             }
         }
@@ -379,9 +390,10 @@ public class AnalysisWait extends AppCompatActivity {
             display += "- For this amount of time: " + displayMapper.get("timeLimit") + "\n";
         }
 
-        if (displayMapper.get("sector") != null) {
+        if (SECTOR_DETECTED_SIGNS != null) {        // means at least one sector was found
+            displayMapper.put("sector", SECTOR_DETECTED_SIGNS);     // add all found sectors to displayMapper
             conditionsFound = true;
-            display += "- Above don't apply if vehicle has permit: " +
+            display += "- Above don't apply if vehicle has permit(s): " +
                     displayMapper.get("sector") + "\n";
         }
 

@@ -56,4 +56,9 @@ public class AnalysisFinished extends AppCompatActivity {
         startActivity(returnToHome);
     }
 
+    // will feed data into firestore
+    public void feedToFirestore (View view) {
+
+    }
+
 }
