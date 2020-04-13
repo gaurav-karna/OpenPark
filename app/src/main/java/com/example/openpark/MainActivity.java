@@ -10,6 +10,10 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -62,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
     // initing self location
     public ArrayList<Location> self_location = new ArrayList<>(); // will only be 1 unit long
 
+    // loading screen
+    ProgressDialog loadingBox;
+
     // Location of picture taken - instantiated when camera is used to take picture of sign
     public static Location locationOfPictureTaken = null;
 
@@ -88,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
            Circumvented by loading all parking spots in the collection of the user (city,
            currently hard set to 'montreal'), but zooming in close to the user's location.
          */
+
+        /*  LAST KNOWN LOCATION IMPLEMENTATION FORMAT
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         fusedLocationClient.getLastLocation()
@@ -118,6 +127,98 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
+                */
+        // show loading while wifi is fetched
+        loadingBox = ProgressDialog.show(MainActivity.this,
+                "Fetching location...",
+                "Please wait...",
+                true);
+
+        // Get current location (if wifi then Network, otherwise GPS provider)
+        LocationListener OpenParkLocationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(final Location location) {
+                // setting up self_location
+                if (location != null) {
+                    self_location.clear();
+                    self_location.add(location);
+                } else {
+                    AlertDialog alertDialog = new AlertDialog.Builder(
+                            MainActivity.this).create();
+                    alertDialog.setTitle("Could not get location");
+                    alertDialog.setMessage("We had trouble fetching your location. " +
+                            "Try again in a few minutes!");
+                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    alertDialog.show();
+                }
+            }
+
+            @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
+            @Override public void onProviderEnabled(String provider) {}
+            @Override public void onProviderDisabled(String provider) {
+                AlertDialog alertDialog = new AlertDialog.Builder(
+                        MainActivity.this).create();
+                alertDialog.setTitle("Permission Required");
+                alertDialog.setMessage("Please enable Location permissions for OpenPark");
+                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.show();
+            }
+        };
+
+        LocationManager OpenParkLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        // check for wifi
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(MainActivity.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+        if (mWifi.isConnected()) {  // prefer network
+            // Request location updates every 60 seconds (60,000 ms)
+            chooseLocationProvider(OpenParkLocationManager,
+                    OpenParkLocationListener,
+                    LocationManager.NETWORK_PROVIDER);
+        } else {        // no wifi - use GPS
+            chooseLocationProvider(OpenParkLocationManager,
+                    OpenParkLocationListener,
+                    LocationManager.GPS_PROVIDER);
+        }
+
+        // dialog for location and querying
+        loadingBox.dismiss();
+        loadingBox = ProgressDialog.show(MainActivity.this,
+                "Querying data...",
+                "Please wait...",
+                true);
+        queryDB();
+    }
+
+    private void chooseLocationProvider(LocationManager OpenParkLocationManager,
+                                        LocationListener OpenParkLocationListener,
+                                        String provider) {
+        try {
+            OpenParkLocationManager.requestLocationUpdates(provider, 60*1000,
+                    0, OpenParkLocationListener);
+        } catch (SecurityException e) {
+            AlertDialog alertDialog = new AlertDialog.Builder(
+                    MainActivity.this).create();
+            alertDialog.setTitle("Permission Required");
+            alertDialog.setMessage("Please enable Location permissions for OpenPark");
+            alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            alertDialog.show();
+        }
     }
 
     public static MainActivity getInstance() {
@@ -278,8 +379,10 @@ public class MainActivity extends AppCompatActivity {
                                     coords.add(toAdd);
                                 }
                             }
+                            loadingBox.dismiss();
 
                         } else {
+                            loadingBox.dismiss();
                             AlertDialog alertDialog = new AlertDialog.Builder(
                                     MainActivity.this).create();
                             alertDialog.setTitle("Could not get information");
