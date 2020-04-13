@@ -29,6 +29,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -55,8 +56,8 @@ public class MainActivity extends AppCompatActivity {
     // Firestore client used to query
     private FirebaseFirestore DB_CLIENT = FirebaseFirestore.getInstance();
 
-    // list of coordinates for parkings in a city
-    public ArrayList<Location> coords = new ArrayList<>();  // using Location b/c it's serializable
+    // list of parking signs in a city
+    public ArrayList<OpenParkFirestoreDocument> coords = new ArrayList<>();
 
     // initing self location
     public ArrayList<Location> self_location = new ArrayList<>(); // will only be 1 unit long
@@ -83,12 +84,11 @@ public class MainActivity extends AppCompatActivity {
         variable dedicated to storing the user's city. Currently, it is hard set to 'montreal'
          */
         // init the Location client, and get fine location of user
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
         /* TODO: Currently no way to query Firestore geopoints to get the closest parking spots...
            Circumvented by loading all parking spots in the collection of the user (city,
            currently hard set to 'montreal'), but zooming in close to the user's location.
          */
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, new OnSuccessListener<Location>() {
@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
         pdCanceller.postDelayed(progressRunnable, 3000);
 
         // adding locations of parkings to Intent
-        trigger.putParcelableArrayListExtra(GEOPOINTS, coords);
+        trigger.putExtra(GEOPOINTS, (Serializable) coords);        // coords is serializable
         trigger.putParcelableArrayListExtra(SELF_LOC, self_location);
 
         startActivity(trigger);
@@ -267,21 +267,14 @@ public class MainActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
 
                             for (QueryDocumentSnapshot document : task.getResult()) {
-//                                GeoPoint gp = document.getGeoPoint("location");
-//                                Location toAdd = new Location("");
-//                                toAdd.setLatitude(gp.getLatitude());
-//                                toAdd.setLongitude(gp.getLongitude());
                                 // Location is a String in Firestore now (Apr. 2020)
+                                OpenParkFirestoreDocument toAdd = document.toObject(OpenParkFirestoreDocument.class);
                                 String parkLocation = document.getString("location");
-                                if (parkLocation.equals("None")) {
+                                if (toAdd.getLocation().equals("None")) {
                                     continue;
                                 } else {
-                                    // parse location into Location object to feed into GMaps
-                                    Location toAdd = new Location("");  // no provider since current location is not needed for query
-                                    String[] parkLocationCoords = parkLocation.split(",");  // according to format set in AnalysisWait
-                                    // parse lat and long as doubles and add them into toAdd
-                                    toAdd.setLatitude(Double.parseDouble(parkLocationCoords[0]));
-                                    toAdd.setLongitude(Double.parseDouble(parkLocationCoords[1]));
+                                    // making OpenPark Custom Firestore object from retrieved data
+                                    // this makes it easier to display information in the marker tags
                                     coords.add(toAdd);
                                 }
                             }

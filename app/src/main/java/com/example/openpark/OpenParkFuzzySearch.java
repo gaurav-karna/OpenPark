@@ -89,7 +89,12 @@ public class OpenParkFuzzySearch {
         String searchLine = line.getText();
 
         // filter common exceptions
-        if ((searchLine.contains("MUNIS")) || (searchLine.matches(".*D.*UN"))) {
+        if (
+                (searchLine.contains("MUNIS")) ||
+                (searchLine.matches(".*D.*UN")) ||
+                (searchLine.contains("EXCEPTE")) ||
+                (searchLine.contains("SECTE"))
+        ) {
             System.out.println("MUNIS - " + (searchLine.contains("MUNIS")));
             System.out.println("DUN - " + (searchLine.matches(".*D.*UN")));
             return false;
