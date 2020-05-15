@@ -17,7 +17,7 @@ public class OpenparkTFAnalysis implements Classifier {
     private static final boolean TF_OD_API_IS_QUANTIZED = true;
     private static final String TF_OD_API_MODEL_FILE = "model.tflite";
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/dict.txt";
-    private static int CONFIDENCE_FILTER = 50;  // % by which we include results sent back to AnalysisWait
+    private static int CONFIDENCE_FILTER = 50;  // % to include results sent back to AnalysisWait
 
     // just so we can implement Classifier
     private Interpreter tfLite;
@@ -27,7 +27,11 @@ public class OpenparkTFAnalysis implements Classifier {
     //this is the method we call to return the results back to AnalysisWait as Strings.
     public ArrayList<String> analysisAPI(Uri imageUri, Context c) throws Exception  {
         // create scaled Bitmap
-        Bitmap bitmap = MediaStore.Images.Media.getBitmap(c.getContentResolver(), imageUri);
+        Bitmap bitmap = MediaStore.Images.Media.getBitmap(
+                c.getContentResolver(),
+                imageUri
+        );
+
         bitmap = Bitmap.createScaledBitmap(bitmap, 512, 512, true);
 
         // creating detector
@@ -38,7 +42,8 @@ public class OpenparkTFAnalysis implements Classifier {
                             TF_OD_API_MODEL_FILE,
                             TF_OD_API_LABELS_FILE,
                             TF_OD_API_INPUT_SIZE,
-                            TF_OD_API_IS_QUANTIZED);
+                            TF_OD_API_IS_QUANTIZED
+                    );
         } catch (final IOException e) {
             e.printStackTrace();
             catchError("Classifier could not be initialized");
@@ -52,7 +57,9 @@ public class OpenparkTFAnalysis implements Classifier {
         for (Recognition validResult : results) {
             // only include results with confidence more than CONFIDENCE_FILTER
             if (((int) (validResult.getConfidence()*100)) >= CONFIDENCE_FILTER) {
-                customResults.add(validResult.getTitle() + ": " + validResult.getConfidence() + "\n");
+                customResults.add(
+                        validResult.getTitle() + ": " + validResult.getConfidence() + "\n"
+                );
             }
         }
 

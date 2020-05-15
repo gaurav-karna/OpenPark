@@ -25,26 +25,34 @@ public class TFAnalysis implements Classifier {
 
     // Only return this many results.
     private static final int NUM_DETECTIONS = 40;
+
     // Float model
     private static final float IMAGE_MEAN = 128.0f;
     private static final float IMAGE_STD = 128.0f;
+
     // Number of threads in the java app
     private static final int NUM_THREADS = 4;
     private boolean isModelQuantized;
+
     // Config values.
     private int inputSize;
+
     // Pre-allocated buffers.
     private Vector<String> labels = new Vector<String>();
     private int[] intValues;
+
     // outputLocations: array of shape [Batchsize, NUM_DETECTIONS,4]
     // contains the location of detected boxes
     private float[][][] outputLocations;
+
     // outputClasses: array of shape [Batchsize, NUM_DETECTIONS]
     // contains the classes of detected boxes
     private float[][] outputClasses;
+
     // outputScores: array of shape [Batchsize, NUM_DETECTIONS]
     // contains the scores of detected boxes
     private float[][] outputScores;
+
     // numDetections: array of shape [Batchsize]
     // contains the number of detected boxes
     private float[] numDetections;
@@ -121,13 +129,22 @@ public class TFAnalysis implements Classifier {
         return d;
     }
 
+
     @Override
     public List<Recognition> recognizeImage(final Bitmap bitmap) {
         // Preprocess the image data from 0-255 int to normalized float based
         // on the provided parameters.
-        bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+        bitmap.getPixels(intValues,
+                0,
+                bitmap.getWidth(),
+                0,
+                0,
+                bitmap.getWidth(),
+                bitmap.getHeight()
+        );
 
         imgData.rewind();
+
         for (int i = 0; i < inputSize; ++i) {
             for (int j = 0; j < inputSize; ++j) {
                 int pixelValue = intValues[i * inputSize + j];
@@ -160,14 +177,15 @@ public class TFAnalysis implements Classifier {
         // Run the inference call.
         tfLite.runForMultipleInputsOutputs(inputArray, outputMap);
 
-        // Show the best detections.
-        // after scaling them back to the input size.
+        /*
+        No need to use the number of detections from the output, not NUM_DETECTONS
+        because on some models, they don't always output the same total number of detections
+        For example, your model's NUM_DETECTIONS = 20, but sometimes it only outputs 16 predictions
+        If you don't use the output's numDetections, you'll get nonsensical data
+        */
 
-        // You need to use the number of detections from the output and not the NUM_DETECTONS variable declared on top
-        // because on some models, they don't always output the same total number of detections
-        // For example, your model's NUM_DETECTIONS = 20, but sometimes it only outputs 16 predictions
-        // If you don't use the output's numDetections, you'll get nonsensical data
-        int numDetectionsOutput = Math.min(NUM_DETECTIONS, (int) numDetections[0]); // cast from float to integer, use min for safety
+        // cast from float to integer, use min for safety
+        int numDetectionsOutput = Math.min(NUM_DETECTIONS, (int) numDetections[0]);
 
         final ArrayList<Recognition> recognitions = new ArrayList<>(numDetectionsOutput);
         for (int i = 0; i < numDetectionsOutput; ++i) {
@@ -177,7 +195,7 @@ public class TFAnalysis implements Classifier {
                             outputLocations[0][i][0] * inputSize,
                             outputLocations[0][i][3] * inputSize,
                             outputLocations[0][i][2] * inputSize);
-            // SSD Mobilenet V1 Model assumes class 0 is background class
+            // Assumes class 0 is background class
             // in label file and class labels start from 1 to number_of_classes+1,
             // while outputClasses correspond to class index from 0 to number_of_classes
             int labelOffset = 1;

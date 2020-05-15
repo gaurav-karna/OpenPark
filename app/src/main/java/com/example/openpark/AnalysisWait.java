@@ -99,7 +99,6 @@ public class AnalysisWait extends AppCompatActivity {
     }
 
     public void tryAgain(View view) {
-//        MainActivity.getInstance().dispatchTakePictureIntent(view);
         finish();
     }
 
@@ -129,9 +128,12 @@ public class AnalysisWait extends AppCompatActivity {
                         .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
                             @Override
                             public void onSuccess(FirebaseVisionText firebaseVisionText) {
-                                OCR_RESULTS = firebaseVisionText;
+
+                                OCR_RESULTS = firebaseVisionText;   // get results from Firebase
+
                                 // kill old loading box
                                 loadingBox.dismiss();
+
                                 // update loading box (Stage 2, custom model)
                                 loadingBox = ProgressDialog.show(AnalysisWait.this,
                                         "Processing 2/3", "Analyzing image...",
@@ -142,6 +144,7 @@ public class AnalysisWait extends AppCompatActivity {
                                     ArrayList<String> customResults = customRunner.analysisAPI(
                                             imageUri, AnalysisWait.this
                                     );
+
                                     CUSTOM_RESULTS_STRING = customResults;
                                     loadingBox.dismiss();
 
@@ -149,8 +152,8 @@ public class AnalysisWait extends AppCompatActivity {
                                     loadingBox = ProgressDialog.show(AnalysisWait.this,
                                             "Processing 3/3", "Parsing text...",
                                             true);
-                                    // begin fuzzy search
-                                    analysisFinished();
+
+                                    analysisFinished();     // begin fuzzy search
 
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -217,7 +220,7 @@ public class AnalysisWait extends AppCompatActivity {
             }
         }
 
-        // holder for all unused lines
+        // holder for all unused lines (for extra information)
         ArrayList<FirebaseVisionText.Line> leftoverOCRLines = new ArrayList<>();
 
         // iterate through all lines and feed into processLine method
@@ -303,7 +306,7 @@ public class AnalysisWait extends AppCompatActivity {
             // No check for SECTORS_TEXTPARAM because there could be multiple sectors
             SECTORS_TEXTPARAM = lineProcesser.searchForSector(line);
             if (SECTORS_TEXTPARAM) {
-                // multiple sectors - append to Global String then set "sector" to global var if !null
+                // multiple sectors: append to Global String then set sector to global var if !null
                 // first time detected, set to not null and append
                 if (SECTOR_DETECTED_SIGNS == null) {
                     SECTOR_DETECTED_SIGNS = line.getText();
@@ -398,8 +401,10 @@ public class AnalysisWait extends AppCompatActivity {
             display += "- For this amount of time: " + displayMapper.get("timeLimit") + "\n";
         }
 
-        if (SECTOR_DETECTED_SIGNS != null) {        // means at least one sector was found
-            displayMapper.put("sector", SECTOR_DETECTED_SIGNS);     // add all found sectors to displayMapper
+        // means at least one sector was found
+        if (SECTOR_DETECTED_SIGNS != null) {
+            // add all found sectors to displayMapper
+            displayMapper.put("sector", SECTOR_DETECTED_SIGNS);
             conditionsFound = true;
             display += "- Above don't apply if vehicle has permit(s): " +
                     displayMapper.get("sector") + "\n";

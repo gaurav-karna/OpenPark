@@ -20,8 +20,8 @@ public interface Classifier {
     /** An immutable result returned by a Classifier describing what was recognized. */
     public class Recognition {
         /**
-         * A unique identifier for what has been recognized. Specific to the class, not the instance of
-         * the object.
+         * A unique identifier for what has been recognized. Specific to the class, not the instance
+         * of the object.
          */
         private final String id;
 
@@ -29,7 +29,7 @@ public interface Classifier {
         private final String title;
 
         /**
-         * A sortable score for how good the recognition is relative to others. Higher should be better.
+         * A sortable score for how good the recognition is relative to others. Higher is better.
          */
         private final Float confidence;
 

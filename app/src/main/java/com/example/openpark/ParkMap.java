@@ -42,15 +42,6 @@ public class ParkMap
     }
 
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -61,10 +52,14 @@ public class ParkMap
         ArrayList<OpenParkFirestoreDocument> allSigns =
                 (ArrayList<OpenParkFirestoreDocument>)
                         intent.getSerializableExtra(MainActivity.GEOPOINTS);
+
         for (OpenParkFirestoreDocument sign : allSigns) {
             // parse location into Location object to feed into GMaps
-            Location toAdd = new Location("");  // no provider since current location is not needed for query
-            String[] parkLocationCoords = sign.getLocation().split(",");  // according to format set in AnalysisWait
+            // no provider since current location is not needed for query
+            Location toAdd = new Location("");
+
+            // according to format set in AnalysisWait
+            String[] parkLocationCoords = sign.getLocation().split(",");
 
             // parse lat and long as doubles and add them into toAdd
             toAdd.setLatitude(Double.parseDouble(parkLocationCoords[0]));
@@ -74,7 +69,9 @@ public class ParkMap
             LatLng loc_to_add = new LatLng(toAdd.getLatitude(), toAdd.getLongitude());
             Marker currentMarker = mMap.addMarker(new MarkerOptions()
                     .position(loc_to_add).title("Parking Sign")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+            );
+
             currentMarker.setTag(sign.mapInformation());    // associating this marker with its data
 
         }
@@ -84,12 +81,14 @@ public class ParkMap
         Location self_loc = (Location) intent.getParcelableArrayListExtra(
                                               MainActivity.SELF_LOC).get(0);
         LatLng self_latlng = new LatLng(self_loc.getLatitude(), self_loc.getLongitude());
+
         mMap.addMarker(new MarkerOptions().position(self_latlng).title("Your Location"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(self_latlng, zoomLevel));
 
         // tell map to listen to marker clicks
         mMap.setOnMarkerClickListener(this);
     }
+
 
     @Override
     public boolean onMarkerClick(final Marker marker) {

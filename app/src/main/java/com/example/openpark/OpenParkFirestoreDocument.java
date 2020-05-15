@@ -6,13 +6,13 @@ public class OpenParkFirestoreDocument implements Serializable {
 
     // document fields
     private String canPark;
-    private String timeStamp;   // use library to convert to String, for easy casting back to Time
+    private String timeStamp;   // use library to convert to String, for easy cast back to Time
     private String daysOfWeek;
-    private String location;    // use library to convert to String, for easy casting back to Location
+    private String location;    // use library to convert to String, for easy cast back to Location
     private String sectors;
     private String timeLimit;
 
-    // in expansion, add conversion to Time for filtering signs based on phone's time and date settings
+    // TODO: add conversion to Time for filtering signs based on phone's time and date settings
     private String timeOfDay;
     private String timeOfYear;
 

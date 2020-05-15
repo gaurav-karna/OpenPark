@@ -51,7 +51,9 @@ public class AnalysisFinished extends AppCompatActivity {
         OCR_RESULTS_DISPLAY = analysisData.getString("ocrResult"); // OCR Results for display
 
         // below is getting the mapping for firestore documents
-        HashMap<String, String> mapHolder = (HashMap<String, String>) analysisData.getSerializable("displayMapper");
+        HashMap<String, String> mapHolder = (HashMap<String, String>) analysisData.getSerializable(
+                "displayMapper"
+        );
 
         // deep copying into firestoreMapper
         firestoreMapper = new HashMap<String, String>();
@@ -71,6 +73,7 @@ public class AnalysisFinished extends AppCompatActivity {
         returnToHome.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(returnToHome);
     }
+
 
     // will feed data into firestore
     public void feedToFirestore (View view) {
@@ -107,11 +110,19 @@ public class AnalysisFinished extends AppCompatActivity {
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
                         loadingBox.dismiss();
+
                         // display success message
-                        loadingBox = ProgressDialog.show(AnalysisFinished.this, "Upload Complete!",
-                                "Returning to home...", true);
-                        Intent returnToHome = new Intent(AnalysisFinished.this, MainActivity.class);
+                        loadingBox = ProgressDialog.show(AnalysisFinished.this,
+                                "Upload Complete!",
+                                "Returning to home...",
+                                true
+                        );
+
+                        Intent returnToHome = new Intent(AnalysisFinished.this,
+                                MainActivity.class
+                        );
                         returnToHome.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
                         loadingBox.dismiss();
                         startActivity(returnToHome);
 
@@ -121,9 +132,16 @@ public class AnalysisFinished extends AppCompatActivity {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         loadingBox.dismiss();
-                        loadingBox = ProgressDialog.show(AnalysisFinished.this, "Upload Failed!",
-                                "Error in upload - Returning to home...", true);
-                        Intent returnToHome = new Intent(AnalysisFinished.this, MainActivity.class);
+
+                        loadingBox = ProgressDialog.show(AnalysisFinished.this,
+                                "Upload Failed!",
+                                "Error in upload - Returning to home...",
+                                true);
+
+                        Intent returnToHome = new Intent(AnalysisFinished.this,
+                                MainActivity.class
+                        );
+
                         returnToHome.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         // delay of 1.5 seconds post failure
                         timerDelayRemoveDialog(1500, loadingBox);
@@ -143,5 +161,4 @@ public class AnalysisFinished extends AppCompatActivity {
             }
         }, time);
     }
-
 }
