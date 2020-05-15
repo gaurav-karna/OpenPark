@@ -3,7 +3,7 @@
 
 Open-sourced public parking in metropolitan areas using machine learning.
 
-**Main application files located [here](https://github.com/gauravkarna/OpenPark/tree/master/app/src/main/java/com/example/openpark)**.
+**Main application files located [here](https://github.com/gaurav-karna/OpenPark/tree/master/app/src/main/java/com/example/openpark)**.
 
 ![title picture](https://i.ibb.co/X3Hbcwz/Picture0.png)
 
